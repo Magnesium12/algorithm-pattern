@@ -162,13 +162,11 @@ Function(x) {
 
 ## 四点要素
 
-1. **状态 State**
-   - 灵感，创造力，存储小规模问题的结果
-2. 方程 Function
+1. 状态方程 State Function
    - 状态之间的联系，怎么通过小的状态，来算大的状态
-3. 初始化 Intialization
+2. 初始化 Intialization
    - 最极限的小状态是什么, 起点
-4. 答案 Answer
+3. 答案 Answer
    - 最大的那个状态是什么，终点
 
 ## 常见四种类型
@@ -189,39 +187,30 @@ Function(x) {
 > 给定一个包含非负整数的  *m* x *n*  网格，请找出一条从左上角到右下角的路径，使得路径上的数字总和为最小。
 
 思路：动态规划
-1、state: f[x][y]从起点走到 x,y 的最短路径
-2、function: f[x][y] = min(f[x-1][y], f[x][y-1]) + A[x][y]
+1、state function: function: f[x][y] = min(f[x-1][y], f[x][y-1]) + A[x][y]
 3、intialize: f[0][0] = A[0][0]、f[i][0] = sum(0,0 -> i,0)、 f[0][i] = sum(0,0 -> 0,i)
 4、answer: f[n-1][m-1]
 
 ```go
-func minPathSum(grid [][]int) int {
-    // 思路：动态规划
-    // f[i][j] 表示i,j到0,0的和最小
-    if len(grid) == 0 || len(grid[0]) == 0 {
-        return 0
-    }
-    // 复用原来的矩阵列表
-    // 初始化：f[i][0]、f[0][j]
-    for i := 1; i < len(grid); i++ {
-        grid[i][0] = grid[i][0] + grid[i-1][0]
-    }
-    for j := 1; j < len(grid[0]); j++ {
-        grid[0][j] = grid[0][j] + grid[0][j-1]
-    }
-    for i := 1; i < len(grid); i++ {
-        for j := 1; j < len(grid[i]); j++ {
-            grid[i][j] = min(grid[i][j-1], grid[i-1][j]) + grid[i][j]
+class Solution {
+public:
+    int minPathSum(vector<vector<int>>& grid) {
+        int m = grid.size();
+        int n =grid[0].size();
+
+        // 优化后的dp
+        vector<int> dp(n+1,INT_MAX/2);
+        dp[1]=0;
+
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                dp[j+1]=min(dp[j],dp[j+1])+grid[i][j];
+            }
         }
+
+        return dp[n];
     }
-    return grid[len(grid)-1][len(grid[0])-1]
-}
-func min(a, b int) int {
-    if a > b {
-        return b
-    }
-    return a
-}
+};
 ```
 
 ### [unique-paths](https://leetcode-cn.com/problems/unique-paths/)

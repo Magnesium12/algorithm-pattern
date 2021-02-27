@@ -16,68 +16,63 @@
 
 > 设计一个支持 push，pop，top 操作，并能在常数时间内检索到最小元素的栈。
 
-思路：用两个栈实现，一个最小栈始终保证最小值在顶部
+思路：
 
-```go
-type MinStack struct {
-    min []int
-    stack []int
-}
+1. 栈存放差值，每次pop/top 元素时，根据差值和最小元素弹出数据；并利用差值更新min
+
+2. 也可以用两个栈实现，一个最小栈始终保证最小值在顶部
 
 
-/** initialize your data structure here. */
-func Constructor() MinStack {
-    return MinStack{
-        min: make([]int, 0),
-        stack: make([]int, 0),
+```cpp
+//思路一
+class MinStack {
+public:
+    /** initialize your data structure here. */
+    stack<int> stk;
+    int min;
+    MinStack() {
     }
-}
-
-
-func (this *MinStack) Push(x int)  {
-    min := this.GetMin()
-    if x < min {
-        this.min = append(this.min, x)
-    } else {
-        this.min = append(this.min, min)
+    
+    void push(int x) {
+        if(stk.empty()){
+            stk.push(x);
+            min = x;
+        }
+        else{
+            if(x-min>0){
+                stk.push(x);
+            }
+            else{
+                stk.push(x-min);
+                 min = x;
+            }
+        }
+        
     }
-    this.stack = append(this.stack, x)
-}
-
-
-func (this *MinStack) Pop()  {
-    if len(this.stack) == 0 {
-        return
+    
+    void pop() {
+        if(stk.top()<0){
+            min=min-stk.top();
+        }
+        stk.pop();
     }
-    this.stack = this.stack[:len(this.stack)-1]
-    this.min = this.min[:len(this.min)-1]
-}
-
-
-func (this *MinStack) Top() int {
-    if len(this.stack) == 0 {
-        return 0
+    
+    int top() {
+        return stk.top();
     }
-    return this.stack[len(this.stack)-1]
-}
-
-
-func (this *MinStack) GetMin() int {
-    if len(this.min) == 0 {
-        return 1 << 31
+    
+    int getMin() {
+        return min;
     }
-    min := this.min[len(this.min)-1]
-    return min
-}
-
+};
 
 /**
  * Your MinStack object will be instantiated and called as such:
- * obj := Constructor();
- * obj.Push(x);
- * obj.Pop();
- * param_3 := obj.Top();
- * param_4 := obj.GetMin();
+ * MinStack* obj = new MinStack();
+ * obj->push(x);
+ * obj->pop();
+ * int param_3 = obj->top();
+ * int param_4 = obj->getMin();
  */
 ```
 
@@ -87,44 +82,34 @@ func (this *MinStack) GetMin() int {
 >
 > **解释:** `((2 + 1) * 3) = 9`
 
-思路：通过栈保存原来的元素，遇到表达式弹出运算，再推入结果，重复这个过程
+思路：数字压入，运算符弹出
 
-```go
-func evalRPN(tokens []string) int {
-    if len(tokens)==0{
-        return 0
-    }
-    stack:=make([]int,0)
-    for i:=0;i<len(tokens);i++{
-        switch tokens[i]{
-        case "+","-","*","/":
-            if len(stack)<2{
-                return -1
+```cpp
+class Solution {
+public:
+    int evalRPN(vector<string>& tokens) {
+        stack<int> number;
+
+        int first,second;
+
+        for(auto s:tokens){
+             if( s == "+" || s == "-" || s == "*" || s == "/" )
+            {                            
+                int second  = number.top(); number.pop();
+                int first   = number.top(); number.pop();
+                if( s == "+" ){ number.push( first + second ); }
+                if( s == "-" ){ number.push( first - second ); }
+                if( s == "*" ){ number.push( first * second ); }
+                if( s == "/" ){ number.push( first / second ); }
             }
-            // 注意：a为被除数，b为除数
-            b:=stack[len(stack)-1]
-            a:=stack[len(stack)-2]
-            stack=stack[:len(stack)-2]
-            var result int
-            switch tokens[i]{
-            case "+":
-                result=a+b
-            case "-":
-                result=a-b
-            case "*":
-                result=a*b
-            case "/":
-                result=a/b
+            else
+            {
+                number.push(stoi(s));
             }
-            stack=append(stack,result)
-        default:
-            // 转为数字
-            val,_:=strconv.Atoi(tokens[i])
-            stack=append(stack,val)
         }
+        return number.top();
     }
-    return stack[0]
-}
+};
 ```
 
 [decode-string](https://leetcode-cn.com/problems/decode-string/)
@@ -134,160 +119,272 @@ func evalRPN(tokens []string) int {
 > s = "3[a2[c]]", 返回 "accaccacc".
 > s = "2[abc]3[cd]ef", 返回 "abcabccdcdcdef".
 
-思路：通过栈辅助进行操作
+思路：递归操作
 
-```go
-func decodeString(s string) string {
-	if len(s) == 0 {
-		return ""
-	}
-	stack := make([]byte, 0)
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case ']':
-			temp := make([]byte, 0)
-			for len(stack) != 0 && stack[len(stack)-1] != '[' {
-				v := stack[len(stack)-1]
-				stack = stack[:len(stack)-1]
-				temp = append(temp, v)
-			}
-			// pop '['
-			stack = stack[:len(stack)-1]
-			// pop num
-			idx := 1
-			for len(stack) >= idx && stack[len(stack)-idx] >= '0' && stack[len(stack)-idx] <= '9' {
-				idx++
-			}
-            // 注意索引边界
-			num := stack[len(stack)-idx+1:]
-			stack = stack[:len(stack)-idx+1]
-			count, _ := strconv.Atoi(string(num))
-			for j := 0; j < count; j++ {
-                // 把字符正向放回到栈里面
-				for j := len(temp) - 1; j >= 0; j-- {
-					stack = append(stack, temp[j])
-				}
-			}
-		default:
-			stack = append(stack, s[i])
+```cpp
+class Solution {
+public:
+    string recursion(string s,int &idx){
+        string res;
 
-		}
-	}
-	return string(stack)
-}
+        string tmp;
+        int mul=0;
+        while(idx!=s.size()){
+            if(isdigit(s[idx])){
+                mul=mul*10+(s[idx]-'0');
+            }
+            else if(s[idx]=='['){
+                tmp=recursion(s,++idx);
+                
+                while(mul--){
+                    
+                    res+=tmp;
+                }
+    
+                mul=0;
+            }
+            else if(isalpha(s[idx])){
+                res+=s[idx];
+            }
+            else if(s[idx]==']'){
+                break;
+            }
+            idx++;
+        }
+        return res;
+    }
+    string decodeString(string s) {
+        int idx=0;
+        return recursion(s,idx);
+    }
+};
 ```
 
-利用栈进行 DFS 递归搜索模板
+- 利用栈操作
 
-```go
-boolean DFS(int root, int target) {
-    Set<Node> visited;
-    Stack<Node> s;
-    add root to s;
-    while (s is not empty) {
-        Node cur = the top element in s;
-        return true if cur is target;
-        for (Node next : the neighbors of cur) {
-            if (next is not in visited) {
-                add next to s;
-                add next to visited;
+```cpp
+class Solution {
+public:
+   string getDigit(string &s,int &p){
+       string ret;
+       while(isdigit(s[p])){
+           ret+=s[p++];
+       }
+       return ret;
+   }
+   string getString(vector<string> &s){
+       string ret;
+       for(const auto& p:s){
+           ret+=p;
+       }
+       return ret;
+   }
+    string decodeString(string s) {
+
+        //模拟栈
+        vector<string> vec;
+        int i=0;
+        while(i<s.size()){
+            if(isdigit(s[i])){
+                string num = getDigit(s,i);
+                vec.push_back(num);
+            }else if(isalpha(s[i])||s[i]=='['){
+                vec.push_back(string(1,s[i++]));
+            }else if(s[i]==']'){
+                i++;
+                vector<string> sub;
+                while(vec.back()!="["){
+                    sub.push_back(vec.back());
+                    vec.pop_back();
+                }
+                reverse(sub.begin(),sub.end());
+
+                //此时栈顶为'[',出栈
+                vec.pop_back();
+
+                //此时为重复次数数字,取出并出栈
+                int repTime = stoi(vec.back());
+                vec.pop_back();
+                string ret,subString=getString(sub);
+                while(repTime--){
+                    ret+=subString;
+                }
+                vec.push_back(ret);
             }
         }
-        remove cur from s;
+ 
+        return getString(vec);
+
     }
-    return false;
-}
+};
 ```
 
 [binary-tree-inorder-traversal](https://leetcode-cn.com/problems/binary-tree-inorder-traversal/)
 
 > 给定一个二叉树，返回它的*中序*遍历。
 
-```go
+```cpp
 // 思路：通过stack 保存已经访问的元素，用于原路返回
-func inorderTraversal(root *TreeNode) []int {
-    result := make([]int, 0)
-    if root == nil {
-        return result
-    }
-    stack := make([]*TreeNode, 0)
-    for len(stack) > 0 || root != nil {
-        for root != nil {
-            stack = append(stack, root)
-            root = root.Left // 一直向左
+class Solution {
+public:
+    vector<int> inorderTraversal(TreeNode* root) {
+        TreeNode* p=root;
+        stack<TreeNode*> stk;
+        vector<int> ans;
+
+        //stk存放未被访问的父节点，p为当前节点
+        while(!stk.empty()||p){
+            if(p){
+                //一路向左
+                stk.push(p);
+                p=p->left;
+            }
+            else{
+                //左孩子为空则转向父节点
+                p=stk.top();
+                stk.pop();
+                ans.push_back(p->val);
+                p=p->right;
+            }
         }
-        // 弹出
-        val := stack[len(stack)-1]
-        stack = stack[:len(stack)-1]
-        result = append(result, val.Val)
-        root = val.Right
+        return ans;
+
     }
-    return result
-}
+};
+```
+
+复习一下递归遍历操作
+```cpp
+
+class Solution {
+public:
+    vector<int> ans;
+    void dfs(TreeNode* root){
+        if(!root){
+            return;
+        }
+        dfs(root->left);
+        ans.push_back(root->val);
+        dfs(root->right);
+    }
+    vector<int> inorderTraversal(TreeNode* root) {
+        dfs(root);
+        return ans;
+    }
+};
 ```
 
 [clone-graph](https://leetcode-cn.com/problems/clone-graph/)
 
 > 给你无向连通图中一个节点的引用，请你返回该图的深拷贝（克隆）。
 
-```go
-func cloneGraph(node *Node) *Node {
-    visited:=make(map[*Node]*Node)
-    return clone(node,visited)
-}
-// 1 2
-// 4 3
-// 递归克隆，传入已经访问过的元素作为过滤条件
-func clone(node *Node,visited map[*Node]*Node)*Node{
-    if node==nil{
-        return nil
-    }
-    // 已经访问过直接返回
-    if v,ok:=visited[node];ok{
-        return v
-    }
-    newNode:=&Node{
-        Val:node.Val,
-        Neighbors:make([]*Node,len(node.Neighbors)),
-    }
-    visited[node]=newNode
-    for i:=0;i<len(node.Neighbors);i++{
-        newNode.Neighbors[i]=clone(node.Neighbors[i],visited)
-    }
-    return newNode
-}
-```
+思路一：DFS递归搜索 + hashmap标识访问
 
+```cpp
+class Solution {
+public:
+    unordered_map<int,Node*> hash;
+
+    Node* cloneGraph(Node* node) {
+        if(!node){
+            return nullptr;
+        }
+        
+        if(hash.find(node->val)!=hash.end()){
+            return hash[node->val];
+        }
+
+        Node* nodeClone=new Node(node->val);
+        hash[node->val]=nodeClone;
+
+        for(auto &neighbor:node->neighbors){
+            nodeClone->neighbors.emplace_back(cloneGraph(neighbor));
+        }
+
+
+        return nodeClone;
+    }
+};
+```
+思路二：BFS
+```cpp
+class Solution {
+public:
+    unordered_map<int,Node*> hash;
+
+    Node* cloneGraph(Node* node) {
+        if(!node){
+            return nullptr;
+        }
+
+        unordered_map <Node*,Node*> hash;
+
+        // 辅助队列：存放遍历层次中未遍历的节点
+        queue<Node*> qu;
+
+        qu.push(node);
+
+        //标记已遍历节点
+        hash[node]=new Node(node->val);
+
+        //广度有限搜索
+        while(!qu.empty()){
+            Node* cur = qu.front();
+            qu.pop();
+
+            for(auto neighbor:cur->neighbors){
+                if(hash.find(neighbor)==hash.end()){
+                    //如果邻居初次访问，则存入hash中进行标记
+                    hash[neighbor]=new Node(neighbor->val);
+                    qu.push(neighbor);
+                }
+                //更新新节点的邻居列表
+                hash[cur]->neighbors.emplace_back(hash[neighbor]);
+            }
+
+        }
+        return hash[node];
+    }
+};
+```
 [number-of-islands](https://leetcode-cn.com/problems/number-of-islands/)
 
 > 给定一个由  '1'（陆地）和 '0'（水）组成的的二维网格，计算岛屿的数量。一个岛被水包围，并且它是通过水平方向或垂直方向上相邻的陆地连接而成的。你可以假设网格的四个边均被水包围。
 
 思路：通过深度搜索遍历可能性（注意标记已访问元素）
 
-```go
+```cpp
+class Solution {
+public:
+    int dfs(vector<vector<char>>& grid,int i,int j){
+        //判断（i，j）是否需要遍历
+        if(i>=grid.size()||i<0||j>=grid[0].size()||j<0||grid[i][j]=='0'){
+            return 0;
+        }
+        if(grid[i][j]=='1'){
+            //标记点
+            grid[i][j]='0';
+            return dfs(grid,i+1,j)+dfs(grid,i-1,j)+dfs(grid,i,j+1)+dfs(grid,i,j-1)+1;
+        }
+        return 0;
+    }
 
-func numIslands(grid [][]byte) int {
-    var count int
-    for i:=0;i<len(grid);i++{
-        for j:=0;j<len(grid[i]);j++{
-            if grid[i][j]=='1' && dfs(grid,i,j)>=1{
-                count++
+    int numIslands(vector<vector<char>>& grid) {
+        int row = grid.size();
+        int column =grid[0].size();
+        int islands=0;
+
+        for(int i=0;i<row;i++){
+            for(int j =0;j<column;j++){
+                
+                if(grid[i][j]=='1' && dfs(grid,i,j)>=1){
+                    islands++;
+                }
             }
         }
+        return islands;
     }
-    return count
-}
-func dfs(grid [][]byte,i,j int)int{
-    if i<0||i>=len(grid)||j<0||j>=len(grid[0]){
-        return 0
-    }
-    if grid[i][j]=='1'{
-        // 标记已经访问过(每一个点只需要访问一次)
-        grid[i][j]=0
-        return dfs(grid,i-1,j)+dfs(grid,i,j-1)+dfs(grid,i+1,j)+dfs(grid,i,j+1)+1
-    }
-    return 0
-}
+};
 ```
 
 [largest-rectangle-in-histogram](https://leetcode-cn.com/problems/largest-rectangle-in-histogram/)
@@ -295,52 +392,55 @@ func dfs(grid [][]byte,i,j int)int{
 > 给定 _n_ 个非负整数，用来表示柱状图中各个柱子的高度。每个柱子彼此相邻，且宽度为 1 。
 > 求在该柱状图中，能够勾勒出来的矩形的最大面积。
 
-思路：求以当前柱子为高度的面积，即转化为寻找小于当前值的左右两边值
+思路：
+    - 遍历柱子，计算每一个柱子高度所能展开的面积。
+    - 转化为：寻找当前柱子左右最近一个比它低的柱子，作为边界。
 
-![image.png](https://img.fuiboom.com/img/stack_rain.png)
 
-用栈保存小于当前值的左的元素
+**延申：单调栈**
 
-![image.png](https://img.fuiboom.com/img/stack_rain2.png)
+单调栈分为单调递增栈和单调递减栈
+1. 单调递增栈即栈内元素保持单调递增的栈
+2. 同理单调递减栈即栈内元素保持单调递减的栈
 
-```go
-func largestRectangleArea(heights []int) int {
-	if len(heights) == 0 {
-		return 0
-	}
-	stack := make([]int, 0)
-	max := 0
-	for i := 0; i <= len(heights); i++ {
-		var cur int
-		if i == len(heights) {
-			cur = 0
-		} else {
-			cur = heights[i]
-		}
-        // 当前高度小于栈，则将栈内元素都弹出计算面积
-		for len(stack) != 0 && cur <= heights[stack[len(stack)-1]] {
-			pop := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-			h := heights[pop]
-            // 计算宽度
-			w := i
-			if len(stack) != 0 {
-				peek := stack[len(stack)-1]
-				w = i - peek - 1
-			}
-			max = Max(max, h*w)
-		}
-        // 记录索引即可获取对应元素
-		stack = append(stack, i)
-	}
-	return max
-}
-func Max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
+操作规则（下面都以单调递增栈为例）
+1. 如果新的元素比栈顶元素大，就入栈
+2. 如果新的元素较小，那就一直把栈内元素弹出来，直到栈顶比新元素小
+
+加入这样一个规则之后，会有什么效果
+1. 栈内的元素是递增的
+2. 当元素出栈时，说明这个新元素是出栈元素向后找第一个比其小的元素，也说明出栈后，栈顶元素是出栈元素的向前第一个比其小的元素。
+
+
+```cpp
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        
+        heights.insert(heights.begin(),0);
+        heights.emplace_back(0);
+        stack<int> stk;
+        
+        int length = heights.size();
+        int ans=0;
+        for(int i=0;i<length;i++){
+            while(!stk.empty()&&heights[stk.top()]>heights[i]){
+                // 出栈元素cur，heights[cur]>heights[i]
+                int cur=stk.top();
+                stk.pop();
+                int right = i;
+                //栈顶元素stk.top()，单调递增栈中：heights[cur]>heights[stk.top()]
+                int left=stk.top();
+                
+                ans = max(ans,(right-left-1)*heights[cur]);
+            }
+
+            stk.push(i);
+        }
+
+        return ans;
+    }
+};
 ```
 
 ## Queue 队列
@@ -351,109 +451,84 @@ func Max(a, b int) int {
 
 > 使用栈实现队列
 
-```go
-type MyQueue struct {
-    stack []int
-    back  []int
-}
+```cpp
+class MyQueue {
+public:
+    /** Initialize your data structure here. */
+    stack<int> stk1;
+    stack<int> stk2;
 
-/** Initialize your data structure here. */
-func Constructor() MyQueue {
-    return MyQueue{
-        stack: make([]int, 0),
-        back:  make([]int, 0),
+    MyQueue() {
+        
     }
-}
+    
+    /** Push element x to the back of queue. */
+    void push(int x) {
+        stk1.push(x);
+    }
+    
+    /** Removes the element from in front of queue and returns that element. */
+    int pop() {
+        int top = peek();
+        stk2.pop();
 
-// 1
-// 3
-// 5
-
-/** Push element x to the back of queue. */
-func (this *MyQueue) Push(x int) {
-    for len(this.back) != 0 {
-        val := this.back[len(this.back)-1]
-        this.back = this.back[:len(this.back)-1]
-        this.stack = append(this.stack, val)
+        return top;
     }
-    this.stack = append(this.stack, x)
-}
-
-/** Removes the element from in front of queue and returns that element. */
-func (this *MyQueue) Pop() int {
-    for len(this.stack) != 0 {
-        val := this.stack[len(this.stack)-1]
-        this.stack = this.stack[:len(this.stack)-1]
-        this.back = append(this.back, val)
+    
+    /** Get the front element. */
+    int peek() {
+        if(stk2.empty()){
+            while(!stk1.empty()){
+                stk2.push(stk1.top());
+                stk1.pop();
+            }
+        }
+        int top = stk2.top();
+        return top;
     }
-    if len(this.back) == 0 {
-        return 0
+    
+    /** Returns whether the queue is empty. */
+    bool empty() {
+        if(stk1.empty()&&stk2.empty()){
+            return true;
+        }else{
+            return false;
+        }
     }
-    val := this.back[len(this.back)-1]
-    this.back = this.back[:len(this.back)-1]
-    return val
-}
-
-/** Get the front element. */
-func (this *MyQueue) Peek() int {
-    for len(this.stack) != 0 {
-        val := this.stack[len(this.stack)-1]
-        this.stack = this.stack[:len(this.stack)-1]
-        this.back = append(this.back, val)
-    }
-    if len(this.back) == 0 {
-        return 0
-    }
-    val := this.back[len(this.back)-1]
-    return val
-}
-
-/** Returns whether the queue is empty. */
-func (this *MyQueue) Empty() bool {
-    return len(this.stack) == 0 && len(this.back) == 0
-}
+};
 
 /**
  * Your MyQueue object will be instantiated and called as such:
- * obj := Constructor();
- * obj.Push(x);
- * param_2 := obj.Pop();
- * param_3 := obj.Peek();
- * param_4 := obj.Empty();
+ * MyQueue* obj = new MyQueue();
+ * obj->push(x);
+ * int param_2 = obj->pop();
+ * int param_3 = obj->peek();
+ * bool param_4 = obj->empty();
  */
 ```
 
 二叉树层次遍历
 
-```go
-func levelOrder(root *TreeNode) [][]int {
-    // 通过上一层的长度确定下一层的元素
-    result := make([][]int, 0)
-    if root == nil {
-        return result
+```cpp
+void levelOrder(BiTree* root){
+    if(!root){
+        return;
     }
-    queue := make([]*TreeNode, 0)
-    queue = append(queue, root)
-    for len(queue) > 0 {
-        list := make([]int, 0)
-        // 为什么要取length？
-        // 记录当前层有多少元素（遍历当前层，再添加下一层）
-        l := len(queue)
-        for i := 0; i < l; i++ {
-            // 出队列
-            level := queue[0]
-            queue = queue[1:]
-            list = append(list, level.Val)
-            if level.Left != nil {
-                queue = append(queue, level.Left)
-            }
-            if level.Right != nil {
-                queue = append(queue, level.Right)
-            }
+    queue<BiTree*> qu;
+    qu.push(root);
+    while(!qu.empty()){
+        BiTree* front = qu.front();
+
+        //遍历当前指针
+        visit(front);
+        if(front->left){
+            qu.push(front->left);
         }
-        result = append(result, list)
+        if(front->right){
+            qu.push(front->right);
+        }
+        qu.pop();
     }
-    return result
 }
 ```
 
@@ -462,55 +537,87 @@ func levelOrder(root *TreeNode) [][]int {
 > 给定一个由 0 和 1 组成的矩阵，找出每个元素到最近的 0 的距离。
 > 两个相邻元素间的距离为 1
 
-```go
-// BFS 从0进队列，弹出之后计算上下左右的结果，将上下左右重新进队列进行二层操作
-// 0 0 0 0
-// 0 x 0 0
-// x x x 0
-// 0 x 0 0
+```cpp
+class Solution {
+public:
+    static constexpr int diff[4][2]{{0,1},{0,-1},{1,0},{-1,0}};
 
-// 0 0 0 0
-// 0 1 0 0
-// 1 x 1 0
-// 0 1 0 0
+    vector<vector<int>> updateMatrix(vector<vector<int>>& matrix) {
+        int m =matrix.size();
+        int n=matrix[0].size();
 
-// 0 0 0 0
-// 0 1 0 0
-// 1 2 1 0
-// 0 1 0 0
-func updateMatrix(matrix [][]int) [][]int {
-    q:=make([][]int,0)
-    for i:=0;i<len(matrix);i++{
-        for j:=0;j<len(matrix[0]);j++{
-            if matrix[i][j]==0{
-                // 进队列
-                point:=[]int{i,j}
-                q=append(q,point)
-            }else{
-                matrix[i][j]=-1
+        vector<vector<int>> dist(m,vector<int>(n,0));
+
+        queue<pair<int,int>> qu;
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(matrix[i][j]==0){
+                    qu.emplace(i,j);
+                }
             }
         }
-    }
-    directions:=[][]int{{0,1},{0,-1},{-1,0},{1,0}}
-    for len(q)!=0{
-        // 出队列
-        point:=q[0]
-        q=q[1:]
-        for _,v:=range directions{
-            x:=point[0]+v[0]
-            y:=point[1]+v[1]
-            if x>=0&&x<len(matrix)&&y>=0&&y<len(matrix[0])&&matrix[x][y]==-1{
-                matrix[x][y]=matrix[point[0]][point[1]]+1
-                // 将当前的元素进队列，进行一次BFS
-                q=append(q,[]int{x,y})
+
+        while(!qu.empty()){
+            auto [i,j]=qu.front();
+            qu.pop();
+            for(int k=0;k<4;k++){
+                int ni=i+diff[k][0];
+                int nj=j+diff[k][1];
+                
+                if(ni>=0&&ni<m&&nj>=0&&nj<n&&dist[ni][nj]==0&&matrix[ni][nj]==1){
+                    dist[ni][nj]=dist[i][j]+1;
+                    qu.emplace(ni,nj);
+                }
             }
         }
+        return dist;
     }
-    return matrix
-
-}
+};
 ```
 
+动态规划
+```cpp
+class Solution {
+public:
+    static constexpr int diff[4][2]{{0,1},{0,-1},{1,0},{-1,0}};
+
+    vector<vector<int>> updateMatrix(vector<vector<int>>& matrix) {
+        int m =matrix.size();
+        int n=matrix[0].size();
+
+        vector<vector<int>> dist(m,vector<int>(n,INT_MAX/2));
+        for(int i=0;i<m;++i){
+            for(int j=0;j<n;++j){
+                if(matrix[i][j]==0){
+                    dist[i][j]=0;
+                }
+            }
+        }
+
+        for(int i=0;i<m;++i){
+            for(int j=0;j<n;++j){
+                if(i-1>=0){
+                    dist[i][j]=min(dist[i][j],dist[i-1][j]+1);
+                }
+                if(j-1>=0){
+                    dist[i][j]=min(dist[i][j],dist[i][j-1]+1);
+                }
+            }
+        }
+        for(int i=m-1;i>=0;--i){
+            for(int j=n-1;j>=0;--j){
+                if(i+1<m){
+                    dist[i][j]=min(dist[i][j],dist[i+1][j]+1);
+                }
+                if(j+1<n){
+                    dist[i][j]=min(dist[i][j],dist[i][j+1]+1);
+                }
+            }
+        }
+        return dist;
+    }
+};
+```
 ## 总结
 
 - 熟悉栈的使用场景

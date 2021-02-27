@@ -9,7 +9,7 @@
 
 先介绍两个算法题，试试感觉~
 
-示例 1
+## strStr
 
 [strStr](https://leetcode-cn.com/problems/implement-strstr/)
 
@@ -17,34 +17,87 @@
 
 思路：核心点遍历给定字符串字符，判断以当前字符开头字符串是否等于目标字符串
 
-```go
-func strStr(haystack string, needle string) int {
-    if len(needle) == 0 {
-        return 0
-    }
-    var i, j int
-    // i不需要到len-1
-    for i = 0; i < len(haystack)-len(needle)+1; i++ {
-        for j = 0; j < len(needle); j++ {
-            if haystack[i+j] != needle[j] {
-                break
-            }
+### KMP算法
+> KMP算法只回溯pattern，
+> 确定next 数组，next数组指向其中要回溯的最小位置
+### KMP代码
+```cpp
+void getNext(int *next,const &string s){
+    next[0]=-1;
+    int j=0;
+    for(int i =1;i<s.size();i++){
+        if(s[i]==s[j+1]){
+            j++;
         }
-        // 判断字符串长度是否相等
-        if len(needle) == j {
-            return i
+        while(j>=0&&s[i]!=s[j+1]){
+            j=next[j];
+        }
+        next[i]=j;
+    }
+}
+
+int strStr(string haystack, string needle) {
+    if（needle.size()==0){
+        return 0;
+    }
+    int next[needle.size()];
+    getNext(next,needle);
+    int j=0;
+    for(int i=0,i< haystack.size();i++){
+        while(j>=0&&needle[j]!=haystack[i]){
+            j=next[j];
+        }
+        if(needle[j]==haystack[i]){
+            j++；
+        }
+        if(j==needle.szie()){
+            return i-needle.szie();
         }
     }
-    return -1
+    return -1;
 }
 ```
 
-需要注意点
+### Sunday算法
+>核心：构建偏移表，确定下一步可能匹配的最小右移距离
 
-- 循环时，i 不需要到 len-1
-- 如果找到目标字符串，len(needle)==j
+```cpp
 
-示例 2
+class Solution {
+public:
+    int strStr(string haystack, string needle) {
+        // 建立偏移表
+        int hSize=haystack.size();
+        int nSize=needle.size();
+        unordered_map<char, int> offset;
+        for(int i=0;i<nSize;i++) offset[needle[i]]=nSize-i;
+
+        // 遍历
+        int i=0;
+        while(i<=hSize-nSize){
+            if(haystack.substr(i,nSize)==needle) return i;//substr（pos：int，len：int）
+            else{
+                // 查询substr后的字符的偏移值
+                if(i+nSize>hSize-1) return -1;
+                else{
+                    if(offset.find(haystack[i+nSize])!=offset.end()){ 
+                        //如果map存在haystack[i+nSize]，则返回haystack[i+nSize]，否则返回map.end()对象
+                        //简言之：该条件指下一字符在偏移表中
+                        i+=offset[haystack[i+nSize]];
+                    }
+                    else{
+                        i+=nSize+1;
+                    }
+                }
+            }
+        }
+
+        return -1;
+    }
+};
+```
+
+## SubSets
 
 [subsets](https://leetcode-cn.com/problems/subsets/)
 
@@ -52,7 +105,7 @@ func strStr(haystack string, needle string) int {
 
 思路：这是一个典型的应用回溯法的题目，简单来说就是穷尽所有可能性，算法模板如下
 
-```go
+```
 result = []
 func backtrack(选择列表,路径):
     if 满足结束条件:
@@ -66,34 +119,60 @@ func backtrack(选择列表,路径):
 
 通过不停的选择，撤销选择，来穷尽所有可能性，最后将满足条件的结果返回
 
-答案代码
+### 回溯
+> DFS查找并返回
 
-```go
-func subsets(nums []int) [][]int {
-    // 保存最终结果
-    result := make([][]int, 0)
-    // 保存中间结果
-    list := make([]int, 0)
-    backtrack(nums, 0, list, &result)
-    return result
-}
-
-// nums 给定的集合
-// pos 下次添加到集合中的元素位置索引
-// list 临时结果集合(每次需要复制保存)
-// result 最终结果
-func backtrack(nums []int, pos int, list []int, result *[][]int) {
-    // 把临时结果复制出来保存到最终结果
-    ans := make([]int, len(list))
-    copy(ans, list)
-    *result = append(*result, ans)
-    // 选择、处理结果、再撤销选择
-    for i := pos; i < len(nums); i++ {
-        list = append(list, nums[i])
-        backtrack(nums, i+1, list, result)
-        list = list[0 : len(list)-1]
+```cpp
+class Solution {
+public:
+    vector<vector<int>> ans;
+    vector<int> tmp;
+    void dfs(int i,vector<int> nums){
+        if(i==nums.size()){
+            ans.push_back(tmp);
+            return;
+        }
+        tmp.push_back(nums[i]);
+        dfs(i+1,nums);
+        tmp.pop_back();
+        dfs(i+1,nums);
     }
-}
+    vector<vector<int>> subsets(vector<int>& nums) {
+        dfs(0,nums);
+        return ans;
+    }
+};
+
+```
+
+
+### 集合的思想
+> 一个利用有效位的算法
+> 时间复杂度 O(n*2^n)
+> 空间复杂度 O（n)
+```cpp
+class Solution {
+public:
+
+    vector<vector<int>> subsets(vector<int>& nums) {
+        vector<vector<int>> ans;
+        vector<int> tmp;
+        int n=nums.size();
+        // 位运算实现2^n范围内的掩膜
+        // eg: 0000000000
+        for (int mask=0;mask<(1<<n);mask++){
+            tmp.clear();
+            for(int i =0;i<n;i++){
+                //位运算校验数字是否出现
+                if(mask&(1<<i)){
+                    tmp.push_back(nums[i]);
+                }
+            }
+            ans.push_back(tmp);
+        }
+        return ans;
+    }
+};
 ```
 
 说明：后面会深入讲解几个典型的回溯算法问题，如果当前不太了解可以暂时先跳过
