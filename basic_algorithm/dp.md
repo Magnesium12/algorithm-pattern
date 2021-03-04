@@ -188,7 +188,17 @@ Function(x) {
 
 思路：动态规划
 1、state function: function: f[x][y] = min(f[x-1][y], f[x][y-1]) + A[x][y]
-3、intialize: f[0][0] = A[0][0]、f[i][0] = sum(0,0 -> i,0)、 f[0][i] = sum(0,0 -> 0,i)
+3、intialize: 
+
+$$
+\begin{array}{l}
+\bullet \text { 当 } i>0 \text { 且 } j=0 \text { 时, } d p[i][0]=d p[i-1][0]+\operatorname{grid}[i][0] \\
+\bullet\text {  当 } i=0 \text { 且 } j>0 \text { 时, } d p[0][j]=d p[0][j-1]+g r i d[0][j] \\
+\bullet \text { 当 } i>0 \text { 且 } j>0 \text { 时, } d p[i][j]=\min (d p[i-1][j], d p[i][j-1])+\operatorname{grid}[i][j]
+\end{array}
+$$
+
+
 4、answer: f[n-1][m-1]
 
 ```go
@@ -219,25 +229,20 @@ public:
 > 机器人每次只能向下或者向右移动一步。机器人试图达到网格的右下角（在下图中标记为“Finish”）。
 > 问总共有多少条不同的路径？
 
-```go
-func uniquePaths(m int, n int) int {
-	// f[i][j] 表示i,j到0,0路径数
-	f := make([][]int, m)
-	for i := 0; i < m; i++ {
-		for j := 0; j < n; j++ {
-			if f[i] == nil {
-				f[i] = make([]int, n)
-			}
-			f[i][j] = 1
-		}
-	}
-	for i := 1; i < m; i++ {
-		for j := 1; j < n; j++ {
-			f[i][j] = f[i-1][j] + f[i][j-1]
-		}
-	}
-	return f[m-1][n-1]
-}
+```cpp
+class Solution {
+public:
+    int uniquePaths(int m, int n) {
+        vector<int> vec(n,1);
+        for(int i=1;i<m;i++){
+            for(int j=1;j<n;j++){
+                vec[j]=vec[j]+vec[j-1];
+            }
+        }
+
+        return vec[n-1];
+    }
+};
 ```
 
 ### [unique-paths-ii](https://leetcode-cn.com/problems/unique-paths-ii/)
@@ -247,44 +252,31 @@ func uniquePaths(m int, n int) int {
 > 问总共有多少条不同的路径？
 > 现在考虑网格中有障碍物。那么从左上角到右下角将会有多少条不同的路径？
 
-```go
-func uniquePathsWithObstacles(obstacleGrid [][]int) int {
-	// f[i][j] = f[i-1][j] + f[i][j-1] 并检查障碍物
-	if obstacleGrid[0][0] == 1 {
-		return 0
-	}
-	m := len(obstacleGrid)
-	n := len(obstacleGrid[0])
-	f := make([][]int, m)
-	for i := 0; i < m; i++ {
-		for j := 0; j < n; j++ {
-			if f[i] == nil {
-				f[i] = make([]int, n)
-			}
-			f[i][j] = 1
-		}
-	}
-	for i := 1; i < m; i++ {
-		if obstacleGrid[i][0] == 1 || f[i-1][0] == 0 {
-			f[i][0] = 0
-		}
-	}
-	for j := 1; j < n; j++ {
-		if obstacleGrid[0][j] == 1 || f[0][j-1] == 0 {
-			f[0][j] = 0
-		}
-	}
-	for i := 1; i < m; i++ {
-		for j := 1; j < n; j++ {
-			if obstacleGrid[i][j] == 1 {
-				f[i][j] = 0
-			} else {
-				f[i][j] = f[i-1][j] + f[i][j-1]
-			}
-		}
-	}
-	return f[m-1][n-1]
-}
+```cpp
+class Solution {
+public:
+    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {
+        int m =obstacleGrid.size();
+        int n =obstacleGrid[0].size();
+
+        vector<int> vec(n);
+        vec[0]=(obstacleGrid[0][0]==0);
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(obstacleGrid[i][j]==1){
+                    vec[j]=0;
+                    continue;
+                }
+                if(j-1>=0){
+                    vec[j]=vec[j]+vec[j-1];
+                }
+                
+            }
+        }
+
+        return vec[n-1];
+    }
+};
 ```
 
 ## 2、序列类型（40%）
