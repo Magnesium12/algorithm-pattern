@@ -524,7 +524,7 @@ public:
         return newHead;
     }
 
-    // 中点便利写法
+    // 中点遍历写法
     ListNode* middleNode(ListNode* head){
         ListNode* slow=head;
         ListNode* fast=head;

@@ -96,55 +96,36 @@ func merge(left, right []int) (result []int) {
 
 ![image.png](https://img.fuiboom.com/img/heap.png)
 
-核心代码
+最大堆核心代码
 
-```go
-package main
+```cpp
+void max_heapify(int arr[],int begin,int end){
+    int dad =start;
+    int son = start*2+1;
+    while(son<=end){
+        if(son+1<=end&& arr[son]<= arr[son+1])
+            son++;
+        if(arr[dad]>arr[son])
+        return
+        else{
+            swap(arr[son],arr[dad]);
+            dad =son;
+            son = son*2+1;
+        }
+    }
 
-func HeapSort(a []int) []int {
-    // 1、无序数组a
-	// 2、将无序数组a构建为一个大根堆
-	for i := len(a)/2 - 1; i >= 0; i-- {
-		sink(a, i, len(a))
-	}
-	// 3、交换a[0]和a[len(a)-1]
-	// 4、然后把前面这段数组继续下沉保持堆结构，如此循环即可
-	for i := len(a) - 1; i >= 1; i-- {
-		// 从后往前填充值
-		swap(a, 0, i)
-		// 前面的长度也减一
-		sink(a, 0, i)
-	}
-	return a
 }
-func sink(a []int, i int, length int) {
-	for {
-		// 左节点索引(从0开始，所以左节点为i*2+1)
-		l := i*2 + 1
-		// 有节点索引
-		r := i*2 + 2
-		// idx保存根、左、右三者之间较大值的索引
-		idx := i
-		// 存在左节点，左节点值较大，则取左节点
-		if l < length && a[l] > a[idx] {
-			idx = l
-		}
-		// 存在有节点，且值较大，取右节点
-		if r < length && a[r] > a[idx] {
-			idx = r
-		}
-		// 如果根节点较大，则不用下沉
-		if idx == i {
-			break
-		}
-		// 如果根节点较小，则交换值，并继续下沉
-		swap(a, i, idx)
-		// 继续下沉idx节点
-		i = idx
-	}
-}
-func swap(a []int, i, j int) {
-	a[i], a[j] = a[j], a[i]
+void heapiSort(int arr[],int len){
+    for(int i=len/2-1;i>=0;i--){
+        max_heapify(arr,i,len -1);
+
+    }
+
+    for(int i=len -1;i>0;i--){
+        swap(arr[0],arr[i]);
+
+        max_heapify(arr,0,i-1);
+    }
 }
 
 ```
@@ -158,3 +139,65 @@ func swap(a []int, i, j int) {
 ## 练习
 
 - [ ] 手写快排、归并、堆排序
+
+手写快速排序
+```cpp
+int quickSortPartition(int arr[],int begin,int end){
+    int pivot = arr[end];
+    int i =begin-1;
+
+    for(int j=begin;j<=end -1;++j){
+        if(arr[j]<=pivot){
+            i++;
+            swap(arr[i],arr[j]);
+        }
+    }
+    swap(arr[end],arr[i+1]);
+
+    return i+1;
+}
+
+void quickSort(int arr[],int begin,int end){
+    if(begin<end){
+        int pos = quickSortPartition(arr, begin,end);
+        quickSort(arr, pos+1,end);
+        quickSort(arr, begin,pos-1);
+    }
+}
+
+
+```
+手写堆排序
+```cpp
+
+void min_heapify(int arr[],int dad){
+    int son = dad*2+1;
+
+    while(son<=end){
+        if(son+1<=end && arr[son]>=arr[son+1]){
+            son++;
+        }
+
+        if(arr[son]>arr[dad]){
+            return
+        }
+        else{
+            swap(arr,son,dad);
+            dad=son;
+            son=son*2+1;
+        }
+    }
+}
+
+void heapSort(int arr[],int len){
+    // 第一个非叶子节点
+    for(int i=len/2-1;i>=0;i--){
+        min_heapify(arr,i);
+    }
+
+    for(int i=len-1;i>0;i--){
+        swap(arr[0],arr[i]);
+        min_heapify(arr,0,i-1);
+    }
+}
+```

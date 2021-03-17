@@ -285,20 +285,26 @@ public:
 
 > 假设你正在爬楼梯。需要  *n*  阶你才能到达楼顶。
 
-```go
-func climbStairs(n int) int {
-    // f[i] = f[i-1] + f[i-2]
-    if n == 1 || n == 0 {
-        return n
+```cpp
+class Solution {
+public:
+    int climbStairs(int n) {
+        if(n==1){
+            return 1;
+        }
+        if(n==2){
+            return 2;
+        }
+
+        vector<int> stair{1,2};
+
+        for(int i=2;i<n;i++){
+            swap(stair[0],stair[1]);
+            stair[1]=stair[0]+stair[1];
+        }
+        return stair[1];
     }
-    f := make([]int, n+1)
-    f[1] = 1
-    f[2] = 2
-    for i := 3; i <= n; i++ {
-        f[i] = f[i-1] + f[i-2]
-    }
-    return f[n]
-}
+};
 ```
 
 ### [jump-game](https://leetcode-cn.com/problems/jump-game/)
@@ -778,3 +784,66 @@ Backpack & Coin Change (10%)
 - [ ] [coin-change](https://leetcode-cn.com/problems/coin-change/)
 - [ ] [backpack](https://www.lintcode.com/problem/backpack/description)
 - [ ] [backpack-ii](https://www.lintcode.com/problem/backpack-ii/description)
+
+
+- 猿辅导：击鼓传花
+```cpp
+const int MOD = 10000007;
+
+// 矩阵快速幂(方阵)
+vector<vector<int>> matMul(vector<vector<int>> &A, vector<vector<int>> &B)
+{
+    vector<vector<int>> ret(A.size(), vector<int>(B[0].size(), 0));
+    for (size_t i = 0; i < A.size(); i++)
+    {
+        for (size_t j = 0; j < B[0].size(); j++)
+        {
+            for (size_t k = 0; k < A[0].size(); k++)
+            {
+                ret[i][j] += A[i][k] * B[k][j];
+                ret[i][j] %= MOD;
+            }
+        }
+    }
+    return ret;
+}
+
+vector<vector<int>> matQuickPow(vector<vector<int>> &mat, int n)
+{
+    vector<vector<int>> ret = {{1, 0}, {0, 1}};
+    while (n)
+    {
+        if (n & 1)
+            ret = matMul(ret, mat);
+
+        mat = matMul(mat, mat);
+        n >>= 1;
+    }
+    return ret;
+}
+
+int main(int argc, char const *argv[])
+{
+    int N, K;
+    cin >> N >> K;
+
+    vector<vector<int>> mat = {{K - 2, K - 1}, {1, 0}};
+
+    mat = matQuickPow(mat, N-2);
+    for (auto i : mat)
+    {
+        for (auto j : i)
+        {
+            cout << j<<" ";
+        }
+        cout<<endl;
+    }
+
+    int ans = 0;
+    vector<int> X = {K - 1, 0};
+    ans = mat[0][0] * X[0] % MOD + mat[0][1] * X[1] % MOD;
+    cout<<endl<<ans;
+    return 0;
+}
+
+```
