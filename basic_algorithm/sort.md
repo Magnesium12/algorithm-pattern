@@ -100,8 +100,8 @@ func merge(left, right []int) (result []int) {
 
 ```cpp
 void max_heapify(int arr[],int begin,int end){
-    int dad =start;
-    int son = start*2+1;
+    int dad =begin;
+    int son = begin*2+1;
     while(son<=end){
         if(son+1<=end&& arr[son]<= arr[son+1])
             son++;
@@ -143,18 +143,33 @@ void heapiSort(int arr[],int len){
 手写快速排序
 ```cpp
 int quickSortPartition(int arr[],int begin,int end){
-    int pivot = arr[end];
-    int i =begin-1;
+    // int pivot = arr[end];
+    // int i =begin-1;
 
-    for(int j=begin;j<=end -1;++j){
-        if(arr[j]<=pivot){
-            i++;
-            swap(arr[i],arr[j]);
-        }
+    // for(int j=begin;j<=end -1;++j){
+    //     if(arr[j]<=pivot){
+    //         i++;
+    //         swap(arr[i],arr[j]);
+    //     }
+    // }
+    // swap(arr[end],arr[i+1]);
+
+    // return i+1;
+
+    int pivot = arr[(begin+end)/2];
+    int i=begin,j=end;
+
+    while(i<j){
+        while(arr[j]>pivot&&i<j)
+        j--;
+
+        while(arr[i]<pivot&&i<j)
+        i++;
+
+        swap(arr[i],arr[j]);
     }
-    swap(arr[end],arr[i+1]);
 
-    return i+1;
+    return i;
 }
 
 void quickSort(int arr[],int begin,int end){

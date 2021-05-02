@@ -253,28 +253,27 @@ public:
 > 现在考虑网格中有障碍物。那么从左上角到右下角将会有多少条不同的路径？
 
 ```cpp
-class Solution {
+class Solution
+{
 public:
-    int uniquePathsWithObstacles(vector<vector<int>>& obstacleGrid) {
-        int m =obstacleGrid.size();
-        int n =obstacleGrid[0].size();
+    int uniquePathsWithObstacles(vector<vector<int>> &obstacleGrid)
+    {
+        int m = obstacleGrid.size();
+        int n = obstacleGrid[0].size();
 
-        vector<int> vec(n);
-        vec[0]=(obstacleGrid[0][0]==0);
-        for(int i=0;i<m;i++){
-            for(int j=0;j<n;j++){
-                if(obstacleGrid[i][j]==1){
-                    vec[j]=0;
-                    continue;
-                }
-                if(j-1>=0){
-                    vec[j]=vec[j]+vec[j-1];
-                }
-                
+        vector<int> dp(n);
+        dp[0] = (obstacleGrid[0][0] == 0);
+        for (int i = 0; i < m; i++)
+        {
+            for (int j = 0; j < n; j++)
+            {
+                if (obstacleGrid[i][j] == 1)
+                    dp[j] = 0;
+                else if (j - 1 >= 0)
+                    dp[j] = dp[j] + dp[j - 1];
             }
         }
-
-        return vec[n-1];
+        return dp[n - 1];
     }
 };
 ```
@@ -313,27 +312,20 @@ public:
 > 数组中的每个元素代表你在该位置可以跳跃的最大长度。
 > 判断你是否能够到达最后一个位置。
 
-```go
-func canJump(nums []int) bool {
-    // 思路：看最后一跳
-    // 状态：f[i] 表示是否能从0跳到i
-    // 推导：f[i] = OR(f[j],j<i&&j能跳到i) 判断之前所有的点最后一跳是否能跳到当前点
-    // 初始化：f[0] = 0
-    // 结果： f[n-1]
-    if len(nums) == 0 {
-        return true
-    }
-    f := make([]bool, len(nums))
-    f[0] = true
-    for i := 1; i < len(nums); i++ {
-        for j := 0; j < i; j++ {
-            if f[j] == true && nums[j]+j >= i {
-                f[i] = true
-            }
+```cpp
+public:
+    bool canJump(vector<int> &nums)
+    {
+        int right_most = 0;
+        for (int i = 0; i < nums.size(); i++)
+        {
+            if (i > right_most)
+                return false;
+            right_most = max(right_most, i + nums[i]);
         }
+        return true;
     }
-    return f[len(nums)-1]
-}
+};
 ```
 
 ### [jump-game-ii](https://leetcode-cn.com/problems/jump-game-ii/)
@@ -342,53 +334,30 @@ func canJump(nums []int) bool {
 > 数组中的每个元素代表你在该位置可以跳跃的最大长度。
 > 你的目标是使用最少的跳跃次数到达数组的最后一个位置。
 
-```go
-// v1动态规划（其他语言超时参考v2）
-func jump(nums []int) int {
-    // 状态：f[i] 表示从起点到当前位置最小次数
-    // 推导：f[i] = f[j],a[j]+j >=i,min(f[j]+1)
-    // 初始化：f[0] = 0
-    // 结果：f[n-1]
-    f := make([]int, len(nums))
-    f[0] = 0
-    for i := 1; i < len(nums); i++ {
-        // f[i] 最大值为i
-        f[i] = i
-        // 遍历之前结果取一个最小值+1
-        for j := 0; j < i; j++ {
-            if nums[j]+j >= i {
-                f[i] = min(f[j]+1,f[i])
+**解法一**：贪心
+
+```cpp
+class Solution
+{
+public:
+    int jump(vector<int> &nums)
+    {
+        int right_board = 0;
+        int step = 0;
+        for (int i = 0; i < nums.size();)
+        {
+            int tmp_rb = right_board;
+            for (; i <= tmp_rb; i++)
+            {
+                right_board = max(i + nums[i], right_board);
             }
+            step++;
+            if (right_board >= nums.size() - 1)
+                break;
         }
+        return nums.size() == 1 ? 0 : step;
     }
-    return f[len(nums)-1]
-}
-func min(a, b int) int {
-    if a > b {
-        return b
-    }
-    return a
-}
-```
-
-```go
-// v2 动态规划+贪心优化
-func jump(nums []int) int {
-    n:=len(nums)
-    f := make([]int, n)
-    f[0] = 0
-    for i := 1; i < n; i++ {
-        // 取第一个能跳到当前位置的点即可
-        // 因为跳跃次数的结果集是单调递增的，所以贪心思路是正确的
-        idx:=0
-        for idx<n&&idx+nums[idx]<i{
-            idx++
-        }
-        f[i]=f[idx]+1
-    }
-    return f[n-1]
-}
-
+};
 ```
 
 ### [palindrome-partitioning-ii](https://leetcode-cn.com/problems/palindrome-partitioning-ii/)
@@ -396,44 +365,61 @@ func jump(nums []int) int {
 > 给定一个字符串 _s_，将 _s_ 分割成一些子串，使每个子串都是回文串。
 > 返回符合要求的最少分割次数。
 
-```go
-func minCut(s string) int {
-	// state: f[i] "前i"个字符组成的子字符串需要最少几次cut(个数-1为索引)
-	// function: f[i] = MIN{f[j]+1}, j < i && [j+1 ~ i]这一段是一个回文串
-	// intialize: f[i] = i - 1 (f[0] = -1)
-	// answer: f[s.length()]
-	if len(s) == 0 || len(s) == 1 {
-		return 0
-	}
-	f := make([]int, len(s)+1)
-	f[0] = -1
-	f[1] = 0
-	for i := 1; i <= len(s); i++ {
-		f[i] = i - 1
-		for j := 0; j < i; j++ {
-			if isPalindrome(s, j, i-1) {
-				f[i] = min(f[i], f[j]+1)
-			}
-		}
-	}
-	return f[len(s)]
-}
-func min(a, b int) int {
-	if a > b {
-		return b
-	}
-	return a
-}
-func isPalindrome(s string, i, j int) bool {
-	for i < j {
-		if s[i] != s[j] {
-			return false
-		}
-		i++
-		j--
-	}
-	return true
-}
+**思路**：两次dp
+- 根据回文串的最少分割次数，首先写出第一个状态转移方程，$f[i]$ 指到达 $i$ 处时，回文串分割所需的最少次数
+  
+$$
+f[i]=\min _{0 \leq \jmath<i}\{f[j]\}+1, \quad \text { 其中 } s[j+1 . . i] \text { 是一个回文串 }
+$$
+
+- 如何确定 $s[i,j]$ 是回文串，再写出第二个状态转移方程
+
+$$
+g(i, j)=\left\{\begin{array}{ll}
+\text { True, } & i \geq j \\
+g(i+1, j-1) \wedge(s[i]=s[j]), & \text { otherwise }
+\end{array}\right.
+$$
+
+> 当然实际上我们是先利用一个[i,j]的二维数组来维护从i到j的回文串真伪性，然后再利用各部分回文串来动态规划确定终点的最少次数
+```cpp
+class Solution
+{
+public:
+    int minCut(string s)
+    {
+        int n = s.size();
+        vector<vector<bool>> sig(n, vector<bool>(n, true));
+
+        for (int i = n - 1; i >= 0; i--)
+        {
+            for (int j = i + 1; j < n; j++)
+            {
+                // 注意到sig[i,j] 需要sig[i+1,j-1]，所以i必须从高向低遍历，j则需要从i+1向高位遍历
+                sig[i][j] = (s[i] == s[j]) && (sig[i + 1][j - 1]);
+            }
+        }
+
+        vector<int> v(n, INT_MAX);
+
+        for (int i = 0; i < n; i++)
+        {
+            if (sig[0][i])
+            {
+                v[i] = 0;
+            }
+            else
+            {
+                for (int j = 0; j < i; j++)
+                {
+                    if (sig[j + 1][i])
+                        v[i] = min(v[i], v[j] + 1);
+                }
+            }
+        }
+        return v[n - 1];
+    }
+};
 ```
 
 注意点
@@ -444,90 +430,116 @@ func isPalindrome(s string, i, j int) bool {
 
 > 给定一个无序的整数数组，找到其中最长上升子序列的长度。
 
-```go
-func lengthOfLIS(nums []int) int {
-    // f[i] 表示从0开始到i结尾的最长序列长度
-    // f[i] = max(f[j])+1 ,a[j]<a[i]
-    // f[0...n-1] = 1
-    // max(f[0]...f[n-1])
-    if len(nums) == 0 || len(nums) == 1 {
-        return len(nums)
+**思路：动态规划**
+
+$f(i)$ 表示遍历到 `nums[i]` 处的最大递增子序列长度
+$$
+f(i)=\left\{\begin{array}{ll}
+max(f(j))+1 & j \in [0, i),nums[i]>nums[j]\\
+1, & \text { otherwise }
+\end{array}\right.
+$$
+边界条件：$f(0)=1$
+```cpp
+class Solution
+{
+public:
+    int lengthOfLIS(vector<int> &nums)
+    {
+        int len = nums.size();
+        vector<int> dp(len, 1);
+        int max_len = 1;
+        for (int i = 0; i < len; i++)
+        {
+            for (int j = 0; j < i; j++)
+            {
+                if (nums[j] < nums[i])
+                    dp[i] = max(dp[j] + 1, dp[i]);
+            }
+            max_len = max(dp[i], max_len);
+        }
+        return max_len;
     }
-    f := make([]int, len(nums))
-    f[0] = 1
-    for i := 1; i < len(nums); i++ {
-        f[i] = 1
-        for j := 0; j < i; j++ {
-            if nums[j] < nums[i] {
-                f[i] = max(f[i], f[j]+1)
+};
+```
+
+时间复杂度 $O(n^2)$
+
+**思路二：贪心算法+二分查找**
+
+考虑一个简单的贪心，如果我们要使上升子序列尽可能的长，则我们需要让序列上升得尽可能慢，因此我们希望每次在上升子序列最后加上的那个数尽可能的小。
+
+维护一个 greed 数组，`greed[i]`指i+1长度的最长递增子序列末尾元素的最小值，遍历 nums 更新 greed ，最终`greed.size()` 即为最长递增子序列。
+
+```cpp
+class Solution
+{
+public:
+    int lengthOfLIS(vector<int> &nums)
+    {
+        int len = nums.size();
+        vector<int> greed;
+        greed.emplace_back(nums[0]);
+        for (int i = 0; i < len; i++)
+        {
+            if (nums[i] > greed.back())
+                greed.emplace_back(nums[i]);
+            else
+            {
+                int l = 0, r = greed.size(), pos = 0;
+                while (l <= r)
+                {
+                    int mid = (l + r) >> 1;
+                    if (greed[mid] >= nums[i])
+                    {
+                        r = mid - 1;
+                        pos = mid;
+                    }
+                    else
+                        l = mid + 1;
+                }
+                greed[pos] = nums[i];
             }
         }
+        return greed.size();
     }
-    result := f[0]
-    for i := 1; i < len(nums); i++ {
-        result = max(result, f[i])
-    }
-    return result
-
-}
-func max(a, b int) int {
-    if a > b {
-        return a
-    }
-    return b
-}
+};
 ```
 
 ### [word-break](https://leetcode-cn.com/problems/word-break/)
 
 > 给定一个**非空**字符串  *s*  和一个包含**非空**单词列表的字典  *wordDict*，判定  *s*  是否可以被空格拆分为一个或多个在字典中出现的单词。
 
-```go
-func wordBreak(s string, wordDict []string) bool {
-	// f[i] 表示前i个字符是否可以被切分
-	// f[i] = f[j] && s[j+1~i] in wordDict
-	// f[0] = true
-	// return f[len]
-
-	if len(s) == 0 {
-		return true
-	}
-	f := make([]bool, len(s)+1)
-	f[0] = true
-	max,dict := maxLen(wordDict)
-	for i := 1; i <= len(s); i++ {
-		l := 0
-		if i - max > 0 {
-			l = i - max
-		}
-		for j := l; j < i; j++ {
-			if f[j] && inDict(s[j:i],dict) {
-				f[i] = true
-                break
-			}
-		}
-	}
-	return f[len(s)]
-}
-
-
-
-func maxLen(wordDict []string) (int,map[string]bool) {
-    dict := make(map[string]bool)
-	max := 0
-	for _, v := range wordDict {
-		dict[v] = true
-		if len(v) > max {
-			max = len(v)
-		}
-	}
-	return max,dict
-}
-
-func inDict(s string,dict map[string]bool) bool {
-	_, ok := dict[s]
-	return ok
-}
+```cpp
+class Solution
+{
+public:
+    bool wordBreak(string s, vector<string> &wordDict)
+    {
+        int n = s.size();
+        vector<int> dp(n + 1);
+        dp[0] = 1;
+        for (int i = 0; i < n; i++)
+        {
+            if (dp[i] == 1)
+            {
+                for (int j = 0; j < wordDict.size(); j++)
+                {
+                    int word_len = wordDict[j].size();
+                    if (i + word_len <= n && s.substr(i, word_len) == wordDict[j])
+                    {
+                        dp[i + word_len] = 1;
+                    }
+                }
+            }
+        }
+        for (auto i : dp)
+        {
+            cout << i;
+        }
+        return dp[n] == 1;
+    }
+};
 
 ```
 
