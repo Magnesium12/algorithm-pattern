@@ -183,7 +183,7 @@ void quickSort(int arr[],int begin,int end){
 
 ```
 手写堆排序
-```cpp
+````cpp
 
 void min_heapify(int arr[],int dad){
     int son = dad*2+1;
